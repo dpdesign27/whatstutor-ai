@@ -1,20 +1,35 @@
+// Importar biblioteca Winston para logging avanzado
 const winston = require('winston');
 const config = require('../config/config');
 
-// Define log format
+/**
+ * SISTEMA DE LOGGING CON WINSTON
+ * 
+ * Winston es una biblioteca de logging flexible y poderosa
+ * Permite registrar mensajes en múltiples formatos y destinos
+ * 
+ * Niveles de log (de mayor a menor prioridad):
+ * - error: Errores que requieren atención inmediata
+ * - warn: Advertencias sobre situaciones potencialmente problemáticas
+ * - info: Información general sobre el flu jo de la aplicación
+ * - debug: Información de depuración detallada
+ */
+
+// Formato de log estructurado (JSON) para archivos
 const logFormat = winston.format.combine(
-    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    winston.format.errors({ stack: true }),
-    winston.format.splat(),
-    winston.format.json()
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),  // Añadir timestamp
+    winston.format.errors({ stack: true }),  // Incluir stack traces de errores
+    winston.format.splat(),  // Soportar interpolación de strings (%s, %d, etc.)
+    winston.format.json()  // Formatear como JSON para fácil parsing
 );
 
-// Console format for development
+// Formato de log legible para consola (desarrollo)
 const consoleFormat = winston.format.combine(
-    winston.format.colorize(),
-    winston.format.timestamp({ format: 'HH:mm:ss' }),
+    winston.format.colorize(),  // Colorear niveles de log
+    winston.format.timestamp({ format: 'HH:mm:ss' }),  // Timestamp corto
     winston.format.printf(({ timestamp, level, message, ...meta }) => {
         let msg = `${timestamp} [${level}]: ${message}`;
+        // Si hay metadatos adicionales, agregarlos
         if (Object.keys(meta).length > 0) {
             msg += ` ${JSON.stringify(meta)}`;
         }
@@ -22,32 +37,49 @@ const consoleFormat = winston.format.combine(
     })
 );
 
-// Create logger
+/**
+ * Crear instancia del logger
+ * 
+ * Configuración:
+ * - Nivel de log desde configuración (por defecto 'info')
+ * - Múltiples destinos (transports): consola y archivos
+ */
 const logger = winston.createLogger({
-    level: config.app.logLevel,
-    format: logFormat,
+    level: config.app.logLevel,  // Nivel mínimo de logs a registrar
+    format: logFormat,  // Formato para archivos
     transports: [
-        // Write all logs to console
+        // Transport 1: Consola (para desarrollo)
+        // Usa formato colorizado y legible
         new winston.transports.Console({
             format: consoleFormat,
         }),
-        // Write errors to error.log
+
+        // Transport 2: Archivo de errores
+        // Solo registra mensajes de nivel 'error'
         new winston.transports.File({
             filename: 'logs/error.log',
             level: 'error',
         }),
-        // Write all logs to combined.log
+
+        // Transport 3: Archivo combinado
+        // Registra todos los niveles de log
         new winston.transports.File({
             filename: 'logs/combined.log',
         }),
     ],
 });
 
-// Create stream for Morgan HTTP logger
+/**
+ * Stream para integración con Morgan (HTTP logger)
+ * 
+ * Morgan es un middleware de Express para logging de peticiones HTTP
+ * Este stream permite que Morgan use nuestro logger Winston
+ */
 logger.stream = {
     write: (message) => {
-        logger.info(message.trim());
+        logger.info(message.trim());  // Registrar mensajes HTTP como 'info'
     },
 };
 
+// Exportar el logger para uso en toda la aplicación
 module.exports = logger;

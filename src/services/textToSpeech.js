@@ -1,3 +1,4 @@
+// Importar cliente de Google Cloud Text-to-Speech
 const textToSpeech = require('@google-cloud/text-to-speech');
 const config = require('../config/config');
 const logger = require('../utils/logger');
@@ -5,7 +6,17 @@ const { AudioProcessingError } = require('../utils/errorHandler');
 const fs = require('fs').promises;
 const path = require('path');
 
+/**
+ * Servicio de Text-to-Speech (Texto a Voz)
+ * 
+ * Convierte texto en audio de voz natural usando Google Cloud Text-to-Speech
+ * Soporta múltiples idiomas y voces neurales de alta calidad
+ */
 class TextToSpeechService {
+    /**
+     * Constructor
+     * Inicializa el cliente de Text-to-Speech con credenciales de Google Cloud
+     */
     constructor() {
         this.client = new textToSpeech.TextToSpeechClient({
             projectId: config.googleCloud.projectId,
@@ -14,103 +25,124 @@ class TextToSpeechService {
     }
 
     /**
-     * Convert text to speech audio file
-     * @param {string} text - Text to convert
-     * @param {string} languageCode - Language code (e.g., 'en-US', 'es-ES')
-     * @returns {Promise<Buffer>} Audio file buffer
+     * Convertir texto a archivo de audio
+     * @param {string} text - Texto a convertir
+     * @param {string} languageCode - Código de idioma (ej: 'en-US', 'es-ES')
+     * @returns {Promise<Buffer>} Buffer del archivo de audio
+     * 
+     * Genera audio de voz natural a partir de texto usando voces neurales
      */
     async synthesize(text, languageCode = 'en-US') {
         try {
-            logger.info('Starting text-to-speech synthesis', {
+            logger.info('Iniciando síntesis de voz', {
                 languageCode,
                 textLength: text.length,
             });
 
-            // Determine voice based on language
+            // Determinar voz basada en el idioma
             const voiceConfig = this.getVoiceConfig(languageCode);
 
+            // Configurar petición de síntesis
             const request = {
-                input: { text },
-                voice: voiceConfig,
+                input: { text },  // Texto a convertir
+                voice: voiceConfig,  // Configuración de voz
                 audioConfig: {
-                    audioEncoding: 'OGG_OPUS', // WhatsApp-compatible format
-                    speakingRate: 1.0,
-                    pitch: 0.0,
+                    audioEncoding: 'OGG_OPUS',  // Formato compatible con WhatsApp
+                    speakingRate: 1.0,  // Velocidad de habla (0.25 - 4.0, 1.0 es normal)
+                    pitch: 0.0,  // Tono de voz (-20.0 a 20.0, 0.0 es normal)
                 },
             };
 
+            // Enviar petición y esperar respuesta
             const [response] = await this.client.synthesizeSpeech(request);
 
-            logger.info('Speech synthesis completed', {
+            logger.info('Síntesis de voz completada', {
                 audioSize: response.audioContent.length,
             });
 
+            // Retornar buffer de audio
             return response.audioContent;
         } catch (error) {
-            logger.error('Speech synthesis failed', { error: error.message });
+            logger.error('Síntesis de voz falló', { error: error.message });
             throw new AudioProcessingError(
-                `Failed to generate speech: ${error.message}`
+                `Error al generar voz: ${error.message}`
             );
         }
     }
 
     /**
-     * Get voice configuration based on language
-     * @param {string} languageCode - Language code
-     * @returns {object} Voice configuration
+     * Obtener configuración de voz basada en el idioma
+     * @param {string} languageCode - Código de idioma
+     * @returns {object} Configuración de voz
+     * 
+     * Diferentes idiomas usan diferentes voces neurales para sonar natural
      */
     getVoiceConfig(languageCode) {
+        // Mapeo de idiomas a configuraciones de voz
         const voiceMap = {
             'en-US': {
                 languageCode: 'en-US',
-                name: 'en-US-Neural2-F', // Female voice, natural sounding
+                name: 'en-US-Neural2-F',  // Voz femenina neural en inglés americano
                 ssmlGender: 'FEMALE',
             },
             'es-ES': {
                 languageCode: 'es-ES',
-                name: 'es-ES-Neural2-A', // Female Spanish voice
+                name: 'es-ES-Neural2-A',  // Voz femenina neural en español de España
                 ssmlGender: 'FEMALE',
             },
             'es-US': {
                 languageCode: 'es-US',
-                name: 'es-US-Neural2-A', // Female Latin American Spanish
+                name: 'es-US-Neural2-A',  // Voz femenina neural en español latinoamericano
                 ssmlGender: 'FEMALE',
             },
         };
 
-        // Default to en-US if language not found
+        // Usar configuración del idioma o por defecto inglés
         return voiceMap[languageCode] || voiceMap['en-US'];
     }
 
     /**
-     * Save audio to temporary file
-     * @param {Buffer} audioBuffer - Audio buffer
-     * @param {string} filename - Filename (without extension)
-     * @returns {Promise<string>} File path
+     * Guardar audio en archivo temporal
+     * @param {Buffer} audioBuffer - Buffer de audio
+     * @param {string} filename - Nombre del archivo (sin extensión)
+     * @returns {Promise<string>} Ruta del archivo guardado
+     * 
+     * Guarda el audio en el directorio temporal para su posterior uso
      */
     async saveAudioFile(audioBuffer, filename) {
         try {
+            // Construir ruta completa del archivo
             const filepath = path.join(__dirname, '../../temp', `${filename}.ogg`);
+
+            // Escribir buffer a archivo
             await fs.writeFile(filepath, audioBuffer);
-            logger.info('Audio file saved', { filepath });
+
+            logger.info('Archivo de audio guardado', { filepath });
             return filepath;
         } catch (error) {
-            logger.error('Failed to save audio file', { error: error.message });
-            throw new AudioProcessingError('Failed to save audio file');
+            logger.error('Error al guardar archivo de audio', { error: error.message });
+            throw new AudioProcessingError('Error al guardar archivo de audio');
         }
     }
 
     /**
-     * Synthesize and save to file
-     * @param {string} text - Text to convert
-     * @param {string} languageCode - Language code
-     * @param {string} filename - Output filename
-     * @returns {Promise<string>} File path
+     * Sintetizar y guardar en archivo
+     * @param {string} text - Texto a convertir
+     * @param {string} languageCode - Código de idioma
+     * @param {string} filename - Nombre del archivo de salida
+     * @returns {Promise<string>} Ruta del archivo guardado
+     * 
+     * Proceso completo: texto → audio → archivo
+     * Útil para generar respuestas de voz que se enviarán por WhatsApp
      */
     async synthesizeToFile(text, languageCode, filename) {
+        // Generar audio
         const audioBuffer = await this.synthesize(text, languageCode);
+
+        // Guardar a archivo
         return await this.saveAudioFile(audioBuffer, filename);
     }
 }
 
+// Exportar una instancia única (singleton)
 module.exports = new TextToSpeechService();

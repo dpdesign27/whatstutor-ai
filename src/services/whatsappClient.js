@@ -1,96 +1,120 @@
+// Importar biblioteca de Twilio para WhatsApp
 const twilio = require('twilio');
 const config = require('../config/config');
 const logger = require('../utils/logger');
 const { WhatsAppError } = require('../utils/errorHandler');
 
+/**
+ * Cliente de WhatsApp usando la API de Twilio
+ * 
+ * Esta clase maneja toda la comunicación con WhatsApp a través de Twilio
+ * Incluye funcionalidades para enviar mensajes de texto y audio
+ */
 class WhatsAppClient {
+    /**
+     * Constructor
+     * Inicializa el cliente de Twilio con las credenciales de configuración
+     */
     constructor() {
+        // Crear cliente de Twilio con credenciales
         this.client = twilio(config.twilio.accountSid, config.twilio.authToken);
+        // Número de WhatsApp desde el que se enviarán los mensajes
         this.fromNumber = config.twilio.whatsappNumber;
     }
 
     /**
-     * Send a text message via WhatsApp
-     * @param {string} to - Recipient WhatsApp number (format: whatsapp:+1234567890)
-     * @param {string} message - Text message to send
-     * @returns {Promise<object>} Twilio message response
+     * Enviar un mensaje de texto vía WhatsApp
+     * @param {string} to - Número de WhatsApp del destinatario (formato: whatsapp:+1234567890)
+     * @param {string} message - Texto del mensaje a enviar
+     * @returns {Promise<object>} Respuesta del mensaje de Twilio
      */
     async sendTextMessage(to, message) {
         try {
-            logger.info('Sending text message', { to, messageLength: message.length });
+            logger.info('Enviando mensaje de texto', { to, messageLength: message.length });
 
+            // Crear y enviar el mensaje usando la API de Twilio
             const response = await this.client.messages.create({
-                from: this.fromNumber,
-                to,
-                body: message,
+                from: this.fromNumber,      // Número de WhatsApp del bot
+                to,                          // Número del destinatario
+                body: message,               // Contenido del mensaje
             });
 
-            logger.info('Message sent successfully', { sid: response.sid, to });
+            logger.info('Mensaje enviado exitosamente', { sid: response.sid, to });
             return response;
         } catch (error) {
-            logger.error('Failed to send text message', { error: error.message, to });
-            throw new WhatsAppError(`Failed to send message: ${error.message}`);
+            logger.error('Error al enviar mensaje de texto', { error: error.message, to });
+            throw new WhatsAppError(`Error al enviar mensaje: ${error.message}`);
         }
     }
 
     /**
-     * Send an audio message via WhatsApp
-     * @param {string} to - Recipient WhatsApp number
-     * @param {string} audioUrl - Public URL of the audio file
-     * @returns {Promise<object>} Twilio message response
+     * Enviar un mensaje de audio vía WhatsApp  
+     * @param {string} to - Número de WhatsApp del destinatario
+     * @param {string} audioUrl - URL pública del archivo de audio
+     * @returns {Promise<object>} Respuesta del mensaje de Twilio
+     * 
+     * Nota: El archivo de audio debe estar alojado en una URL pública accesible
      */
     async sendAudioMessage(to, audioUrl) {
         try {
-            logger.info('Sending audio message', { to, audioUrl });
+            logger.info('Enviando mensaje de audio', { to, audioUrl });
 
+            // Crear mensaje con archivo de medios (audio)
             const response = await this.client.messages.create({
                 from: this.fromNumber,
                 to,
-                mediaUrl: [audioUrl],
+                mediaUrl: [audioUrl],        // Array de URLs de medios
             });
 
-            logger.info('Audio message sent successfully', { sid: response.sid, to });
+            logger.info('Mensaje de audio enviado exitosamente', { sid: response.sid, to });
             return response;
         } catch (error) {
-            logger.error('Failed to send audio message', { error: error.message, to });
-            throw new WhatsAppError(`Failed to send audio: ${error.message}`);
+            logger.error('Error al enviar mensaje de audio', { error: error.message, to });
+            throw new WhatsAppError(`Error al enviar audio: ${error.message}`);
         }
     }
 
     /**
-     * Send a message with error handling and retry logic
-     * @param {string} to - Recipient number
-     * @param {string} message - Message text
-     * @param {number} retries - Number of retry attempts
+     * Enviar mensaje con lógica de reintento
+     * @param {string} to - Número del destinatario
+     * @param {string} message - Texto del mensaje
+     * @param {number} retries - Número de intentos de reintento (por defecto 3)
+     * 
+     * Reintenta automáticamente si falla el envío, útil para problemas temporales de red
      */
     async sendMessageWithRetry(to, message, retries = 3) {
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
                 return await this.sendTextMessage(to, message);
             } catch (error) {
+                // Si es el último intento, lanzar el error
                 if (attempt === retries) {
                     throw error;
                 }
-                logger.warn(`Retry attempt ${attempt}/${retries} for message to ${to}`);
+                // Esperar antes de reintentar (tiempo de espera incremental)
+                logger.warn(`Intento de reintento ${attempt}/${retries} para mensaje a ${to}`);
                 await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
             }
         }
     }
 
     /**
-     * Format WhatsApp number
-     * @param {string} number - Phone number
-     * @returns {string} Formatted WhatsApp number
+     * Formatear número de WhatsApp
+     * @param {string} number - Número de teléfono
+     * @returns {string} Número de WhatsApp formateado
+     * 
+     * Asegura que el número tenga el prefijo 'whatsapp:' requerido por Twilio
      */
     static formatWhatsAppNumber(number) {
-        // If already formatted, return as is
+        // Si ya está formateado, devolver tal cual
         if (number.startsWith('whatsapp:')) {
             return number;
         }
 
-        // Add whatsapp: prefix
+        // Agregar prefijo whatsapp:
         return `whatsapp:${number}`;
     }
 }
 
+// Exportar una instancia única del cliente (singleton)
 module.exports = new WhatsAppClient();

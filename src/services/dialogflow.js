@@ -1,152 +1,189 @@
+// Importar cliente de Dialogflow CX para inteligencia conversacional
 const { SessionsClient } = require('@google-cloud/dialogflow-cx');
 const config = require('../config/config');
 const logger = require('../utils/logger');
 const { DialogflowError } = require('../utils/errorHandler');
 const { v4: uuidv4 } = require('uuid');
 
+/**
+ * Servicio de Dialogflow CX
+ * 
+ * Maneja la interacción con Google Dialogflow CX para procesamiento de lenguaje natural
+ * Gestiona sesiones de usuario y detecta intenciones conversacionales
+ */
 class DialogflowService {
+    /**
+     * Constructor
+     * Inicializa el cliente de Dialogflow con las credenciales de Google Cloud
+     */
     constructor() {
+        // Crear cliente de sesiones de Dialogflow
         this.client = new SessionsClient({
             projectId: config.googleCloud.projectId,
             keyFilename: config.googleCloud.credentials,
         });
 
+        // Guardar configuración del proyecto
         this.projectId = config.googleCloud.projectId;
         this.location = config.googleCloud.dialogflow.location;
         this.agentId = config.googleCloud.dialogflow.agentId;
 
-        // Store active sessions
+        // Almacenar sesiones activas en memoria
+        // Clave: número de WhatsApp del usuario, Valor: ID de sesión
         this.sessions = new Map();
     }
 
     /**
-     * Get or create session ID for a user
-     * @param {string} userId - User identifier (WhatsApp number)
-     * @returns {string} Session ID
+     * Obtener o crear ID de sesión para un usuario
+     * @param {string} userId - Identificador del usuario (número de WhatsApp)
+     * @returns {string} ID de sesión
+     * 
+     * Cada usuario tiene una sesión única que mantiene el contexto de la conversación
      */
     getSessionId(userId) {
         if (!this.sessions.has(userId)) {
+            // Crear nuevo ID de sesión usando UUID
             const sessionId = uuidv4();
             this.sessions.set(userId, sessionId);
-            logger.info('Created new session', { userId, sessionId });
+            logger.info('Nueva sesión creada', { userId, sessionId });
         }
         return this.sessions.get(userId);
     }
 
     /**
-     * Build session path
-     * @param {string} sessionId - Session ID
-     * @returns {string} Full session path
+     * Construir ruta de sesión completa
+     * @param {string} sessionId - ID de sesión
+     * @returns {string} Ruta completa de sesión
+     * 
+     * Formato: projects/{project}/locations/{location}/agents/{agent}/sessions/{session}
      */
     getSessionPath(sessionId) {
         return `projects/${this.projectId}/locations/${this.location}/agents/${this.agentId}/sessions/${sessionId}`;
     }
 
     /**
-     * Send text query to Dialogflow
-     * @param {string} text - User text input
-     * @param {string} userId - User identifier
-     * @param {string} languageCode - Language code
-     * @returns {Promise<object>} Dialogflow response
+     * Enviar consulta de texto a Dialogflow
+     * @param {string} text - Texto de entrada del usuario
+     * @param {string} userId - Identificador del usuario
+     * @param {string} languageCode - Código de idioma ('en' o 'es')
+     * @returns {Promise<object>} Respuesta de Dialogflow
+     * 
+     * Este es el método principal que envía el texto del usuario a la IA
+     * y recibe una respuesta contextualizada
      */
     async detectIntent(text, userId, languageCode = 'en') {
         try {
+            // Obtener ID de sesión para mantener el contexto
             const sessionId = this.getSessionId(userId);
             const sessionPath = this.getSessionPath(sessionId);
 
-            logger.info('Sending query to Dialogflow', {
+            logger.info('Enviando consulta a Dialogflow', {
                 text,
                 userId,
                 sessionId,
                 languageCode,
             });
 
+            // Construir petición para Dialogflow
             const request = {
                 session: sessionPath,
                 queryInput: {
                     text: {
-                        text,
+                        text,  // Texto del usuario
                     },
-                    languageCode,
+                    languageCode,  // Idioma de la consulta
                 },
             };
 
+            // Enviar petición y esperar respuesta
             const [response] = await this.client.detectIntent(request);
             const queryResult = response.queryResult;
 
-            logger.info('Dialogflow response received', {
+            logger.info('Respuesta de Dialogflow recibida', {
                 intent: queryResult.intent?.displayName,
                 confidence: queryResult.intentDetectionConfidence,
                 responseMessages: queryResult.responseMessages?.length,
             });
 
+            // Retornar respuesta estructurada
             return {
                 text: this.extractResponseText(queryResult),
-                intent: queryResult.intent?.displayName || 'Unknown',
+                intent: queryResult.intent?.displayName || 'Desconocido',
                 confidence: queryResult.intentDetectionConfidence || 0,
                 parameters: queryResult.parameters,
                 languageCode: queryResult.languageCode,
             };
         } catch (error) {
-            logger.error('Dialogflow intent detection failed', {
+            logger.error('Detección de intención de Dialogflow falló', {
                 error: error.message,
                 userId,
             });
             throw new DialogflowError(
-                `Failed to process with AI: ${error.message}`
+                `Error al procesar con IA: ${error.message}`
             );
         }
     }
 
     /**
-     * Extract text response from Dialogflow response messages
-     * @param {object} queryResult - Dialogflow query result
-     * @returns {string} Response text
+     * Extraer texto de respuesta de los mensajes de Dialogflow
+     * @param {object} queryResult - Resultado de la consulta de Dialogflow
+     * @returns {string} Texto de respuesta
+     * 
+     * Dialogflow puede devolver múltiples mensajes de respuesta,
+     * esta función los combina en un solo texto
      */
     extractResponseText(queryResult) {
         if (!queryResult.responseMessages || queryResult.responseMessages.length === 0) {
-            return "I'm sorry, I didn't understand that. Could you rephrase?";
+            return "Lo siento, no entendí eso. ¿Podrías reformularlo?";
         }
 
-        // Combine all text responses
+        // Combinar todas las respuestas de texto
         const textResponses = queryResult.responseMessages
-            .filter(msg => msg.text)
-            .map(msg => msg.text.text)
-            .flat();
+            .filter(msg => msg.text)  // Filtrar solo mensajes de texto
+            .map(msg => msg.text.text)  // Extraer el texto
+            .flat();  // Aplanar arrays anidados
 
-        return textResponses.join('\n') || "I'm here to help you practice English!";
+        return textResponses.join('\n') || "¡Estoy aquí para ayudarte a practicar inglés!";
     }
 
     /**
-     * Clear user session
-     * @param {string} userId - User identifier
+     * Limpiar sesión de usuario
+     * @param {string} userId - Identificador del usuario
+     * 
+     * Útil para reiniciar una conversación o limpiar memoria
      */
     clearSession(userId) {
         if (this.sessions.has(userId)) {
             this.sessions.delete(userId);
-            logger.info('Session cleared', { userId });
+            logger.info('Sesión limpiada', { userId });
         }
     }
 
     /**
-     * Get active session count
-     * @returns {number} Number of active sessions
+     * Obtener contador de sesiones activas
+     * @returns {number} Número de sesiones activas
+     * 
+     * Útil para monitoreo y estadísticas
      */
     getActiveSessionCount() {
         return this.sessions.size;
     }
 
     /**
-     * Clean up old sessions (called periodically)
-     * @param {number} maxAge - Max age in milliseconds
+     * Limpiar sesiones antiguas (llamado periódicamente)
+     * @param {number} maxAge - Edad máxima en milisegundos
+     * 
+     * En producción, deberías implementar un seguimiento de timestamps
+     * y eliminar sesiones que hayan estado inactivas por mucho tiempo
      */
     cleanupSessions(maxAge = config.app.sessionTimeout) {
-        // In production, you'd track session timestamps
-        // For now, just log the cleanup
-        logger.info('Session cleanup triggered', {
+        // Para producción, necesitarías rastrear timestamps de sesión
+        // Por ahora, solo registrar la limpieza
+        logger.info('Limpieza de sesiones activada', {
             activeSessions: this.sessions.size,
         });
     }
 }
 
+// Exportar una instancia única (singleton)
 module.exports = new DialogflowService();
