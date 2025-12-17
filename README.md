@@ -1,188 +1,188 @@
 # Whatstutor AI 🎓
 
-A bilingual conversational AI tutor integrated with WhatsApp, powered by Google Cloud AI services. Practice English through text and voice conversations with an intelligent tutor available 24/7 on WhatsApp.
+Un tutor conversacional de IA bilingüe integrado con WhatsApp, impulsado por los servicios de IA de Google Cloud. Practica inglés mediante conversaciones de texto y voz con un tutor inteligente disponible 24/7 en WhatsApp.
 
-## ✨ Features
+## ✨ Características
 
-- 📱 **WhatsApp Integration**: Interact via text messages or voice notes
-- 🗣️ **Voice Support**: Send voice notes in English or Spanish, get voice responses
-- 🤖 **AI-Powered**: Uses Google Dialogflow CX for natural conversations
-- 🌍 **Bilingual**: Supports English and Spanish with automatic language detection
-- 💬 **Context-Aware**: Maintains conversation context across messages
-- 🎯 **Tutoring Focus**: Designed specifically for English language learning
+- 📱 **Integración con WhatsApp**: Interactúa mediante mensajes de texto o notas de voz
+- 🗣️ **Soporte de Voz**: Envía notas de voz en inglés o español, recibe respuestas de voz
+- 🤖 **Impulsado por IA**: Utiliza Google Dialogflow CX para conversaciones naturales
+- 🌍 **Bilingüe**: Soporta inglés y español con detección automática de idioma
+- 💬 **Consciente del Contexto**: Mantiene el contexto de la conversación a través de los mensajes
+- 🎯 **Enfoque Tutorial**: Diseñado específicamente para el aprendizaje del idioma inglés
 
-## 🏗️ Architecture
+## 🏗️ Arquitectura
 
 ```
-WhatsApp (User) 
+WhatsApp (Usuario) 
     ↓
-Twilio WhatsApp API
+API de WhatsApp de Twilio
     ↓
-Express Webhook Server
+Servidor Webhook Express
     ↓
-Message Handler
-    ├─→ Audio Processor (for voice notes)
+Manejador de Mensajes
+    ├─→ Procesador de Audio (para notas de voz)
     ├─→ Speech-to-Text (Google Cloud)
-    ├─→ Dialogflow CX (conversation AI)
+    ├─→ Dialogflow CX (IA conversacional)
     ├─→ Text-to-Speech (Google Cloud)
-    └─→ WhatsApp Client (Twilio)
+    └─→ Cliente de WhatsApp (Twilio)
 ```
 
-## 📋 Prerequisites
+## 📋 Prerequisitos
 
-- Node.js 18+ 
-- Google Cloud Platform account with billing enabled
-- Twilio account (free tier available)
-- Google Cloud services enabled:
-  - Dialogflow CX API
-  - Cloud Speech-to-Text API
-  - Cloud Text-to-Speech API
+- Node.js 18 o superior
+- Cuenta de Google Cloud Platform con facturación habilitada
+- Cuenta de Twilio (nivel gratuito disponible)
+- Servicios de Google Cloud habilitados:
+  - API de Dialogflow CX
+  - API de Cloud Speech-to-Text
+  - API de Cloud Text-to-Speech
 
-## 🚀 Quick Start
+## 🚀 Inicio Rápido
 
-### 1. Clone and Install
+### 1. Clonar e Instalar
 
 ```bash
 cd whatstutor-ai
 npm install
 ```
 
-### 2. Configure Environment
+### 2. Configurar Entorno
 
-Copy `.env.example` to `.env`:
+Copia `.env.example` a `.env`:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and fill in your credentials:
+Edita `.env` y completa tus credenciales:
 
 ```env
 # Twilio
-TWILIO_ACCOUNT_SID=your_account_sid
-TWILIO_AUTH_TOKEN=your_auth_token
+TWILIO_ACCOUNT_SID=tu_account_sid
+TWILIO_AUTH_TOKEN=tu_auth_token
 TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
 
 # Google Cloud
-GOOGLE_PROJECT_ID=your_project_id
-DIALOGFLOW_AGENT_ID=your_agent_id
+GOOGLE_PROJECT_ID=tu_project_id
+DIALOGFLOW_AGENT_ID=tu_agent_id
 ```
 
-### 3. Set Up Google Cloud Credentials
+### 3. Configurar Credenciales de Google Cloud
 
-1. Create a service account in Google Cloud Console
-2. Download the JSON key file
-3. Save it as `config/google-credentials.json`
-4. Update `GOOGLE_APPLICATION_CREDENTIALS` in `.env`
+1. Crea una cuenta de servicio en la Consola de Google Cloud
+2. Descarga el archivo de clave JSON
+3. Guárdalo como `config/google-credentials.json`
+4. Actualiza `GOOGLE_APPLICATION_CREDENTIALS` en `.env`
 
-### 4. Start the Server
+### 4. Iniciar el Servidor
 
 ```bash
 npm run dev
 ```
 
-The server will start on `http://localhost:3000`
+El servidor se iniciará en `http://localhost:3000`
 
-### 5. Configure Twilio Webhook
+### 5. Configurar Webhook de Twilio
 
-1. Log in to [Twilio Console](https://console.twilio.com/)
-2. Go to WhatsApp Sandbox settings
-3. Set webhook URL to your public endpoint: `https://your-domain.com/webhook`
-   - For local development, use [ngrok](https://ngrok.com/): `ngrok http 3000`
-4. Set HTTP method to `POST`
+1. Inicia sesión en [Consola de Twilio](https://console.twilio.com/)
+2. Ve a la configuración de WhatsApp Sandbox
+3. Establece la URL del webhook a tu punto final público: `https://tu-dominio.com/webhook`
+   - Para desarrollo local, usa [ngrok](https://ngrok.com/): `ngrok http 3000`
+4. Establece el método HTTP como `POST`
 
-### 6. Test the Integration
+### 6. Probar la Integración
 
-Send a WhatsApp message to your Twilio sandbox number:
+Envía un mensaje de WhatsApp a tu número sandbox de Twilio:
 
 ```
 Hello!
 ```
 
-You should receive a response from Whatstutor AI!
+¡Deberías recibir una respuesta de Whatstutor AI!
 
-## 📚 Detailed Setup Guides
+## 📚 Guías Detalladas de Configuración
 
-- [Google Cloud Setup](docs/SETUP_GUIDE.md#google-cloud-setup)
-- [Twilio Configuration](docs/SETUP_GUIDE.md#twilio-configuration)
-- [Dialogflow Agent Creation](docs/SETUP_GUIDE.md#dialogflow-setup)
-- [Deployment Guide](docs/SETUP_GUIDE.md#deployment)
+- [Configurar Google Cloud](docs/GUIA_CONFIGURACION.md#configuración-google-cloud)
+- [Configuración de Twilio](docs/GUIA_CONFIGURACION.md#configuración-twilio)
+- [Crear Agente Dialogflow](docs/GUIA_CONFIGURACION.md#configuración-dialogflow)
+- [Guía de Despliegue](docs/GUIA_CONFIGURACION.md#despliegue)
 
-## 🗂️ Project Structure
+## 🗂️ Estructura del Proyecto
 
 ```
 whatstutor-ai/
 ├── src/
 │   ├── config/
-│   │   └── config.js          # Configuration management
+│   │   └── config.js          # Gestión de configuración
 │   ├── routes/
-│   │   └── webhook.js         # WhatsApp webhook endpoints
+│   │   └── webhook.js         # Endpoints del webhook de WhatsApp
 │   ├── services/
-│   │   ├── audioProcessor.js  # Audio download & processing
-│   │   ├── dialogflow.js      # Dialogflow CX integration
-│   │   ├── messageHandler.js  # Main message orchestration
+│   │   ├── audioProcessor.js  # Descarga y procesamiento de audio
+│   │   ├── dialogflow.js      # Integración con Dialogflow CX
+│   │   ├── messageHandler.js  # Orquestación principal de mensajes
 │   │   ├── speechToText.js    # Google Speech-to-Text
 │   │   ├── textToSpeech.js    # Google Text-to-Speech
-│   │   └── whatsappClient.js  # Twilio WhatsApp client
+│   │   └── whatsappClient.js  # Cliente de WhatsApp con Twilio
 │   ├── utils/
-│   │   ├── errorHandler.js    # Error handling utilities
-│   │   └── logger.js          # Winston logger
-│   └── server.js              # Express server entry point
+│   │   ├── errorHandler.js    # Utilidades de manejo de errores
+│   │   └── logger.js          # Logger Winston
+│   └── server.js              # Punto de entrada del servidor Express
 ├── config/
-│   └── google-credentials.json # Google Cloud credentials (gitignored)
+│   └── google-credentials.json # Credenciales de Google Cloud (ignorado en git)
 ├── docs/
-│   ├── SETUP_GUIDE.md
-│   └── ARCHITECTURE.md
-├── temp/                       # Temporary audio files
-├── logs/                       # Application logs
-├── .env                        # Environment variables (gitignored)
-├── .env.example               # Environment template
+│   ├── GUIA_CONFIGURACION.md
+│   └── ARQUITECTURA.md
+├── temp/                       # Archivos de audio temporales
+├── logs/                       # Registros de la aplicación
+├── .env                        # Variables de entorno (ignorado en git)
+├── .env.example               # Plantilla de entorno
 ├── .gitignore
 ├── package.json
 └── README.md
 ```
 
-## 🎯 Usage Examples
+## 🎯 Ejemplos de Uso
 
-### Text Conversation
+### Conversación de Texto
 
 ```
-User: "Hello! I want to practice English."
-Bot: "Hi! I'd love to help you practice English. What would you like to talk about today?"
+Usuario: "¡Hola! Quiero practicar inglés."
+Bot: "¡Hola! Me encantaría ayudarte a practicar inglés. ¿De qué quieres hablar hoy?"
 
-User: "Let's talk about hobbies."
-Bot: "Great choice! What are some of your favorite hobbies?"
+Usuario: "Hablemos de pasatiempos."
+Bot: "¡Excelente elección! ¿Cuáles son algunos de tus pasatiempos favoritos?"
 ```
 
-### Voice Conversation
+### Conversación de Voz
 
-1. Record a voice note: "Hello, how are you today?"
-2. Send to WhatsApp
-3. Receive transcription confirmation
-4. Get AI response in text (and voice if configured)
+1. Graba una nota de voz: "Hola, ¿cómo estás hoy?"
+2. Envíala a WhatsApp
+3. Recibe confirmación de la transcripción
+4. Obtén respuesta de IA en texto (y voz si está configurada)
 
-### Language Switching
+### Cambio de Idioma
 
 ```
 User: "Hola, ¿cómo estás?"
 Bot: "¡Hola! Estoy aquí para ayudarte a practicar inglés. ¿Quieres que continuemos en inglés?"
 ```
 
-## 🔧 Development
+## 🔧 Desarrollo
 
-### Install Dependencies
+### Instalar Dependencias
 
 ```bash
 npm install
 ```
 
-### Run Development Server
+### Ejecutar Servidor de Desarrollo
 
 ```bash
 npm run dev
 ```
 
-### Run Production Server
+### Ejecutar Servidor de Producción
 
 ```bash
 npm start
@@ -194,95 +194,95 @@ npm start
 npm run lint
 ```
 
-## 📊 Monitoring
+## 📊 Monitoreo
 
-Check server health:
+Verificar estado del servidor:
 
 ```bash
 curl http://localhost:3000/health
 ```
 
-View logs:
+Ver registros:
 
 ```bash
 tail -f logs/combined.log
 tail -f logs/error.log
 ```
 
-## 🌐 Deployment
+## 🌐 Despliegue
 
-See [docs/SETUP_GUIDE.md](docs/SETUP_GUIDE.md#deployment) for detailed deployment instructions for:
+Consulta [docs/GUIA_CONFIGURACION.md](docs/GUIA_CONFIGURACION.md#despliegue) para instrucciones detalladas de despliegue en:
 
 - Google Cloud Run
 - AWS EC2
 - Heroku
 - DigitalOcean
 
-## 💰 Cost Considerations
+## 💰 Consideraciones de Costos
 
-### Free Tier Limits
+### Límites del Nivel Gratuito
 
-- **Dialogflow CX**: 100 requests/month free
-- **Speech-to-Text**: 60 minutes/month free
-- **Text-to-Speech**: 1M characters/month free
-- **Twilio Sandbox**: Free for testing with approved numbers
+- **Dialogflow CX**: 100 peticiones/mes gratis
+- **Speech-to-Text**: 60 minutos/mes gratis
+- **Text-to-Speech**: 1M caracteres/mes gratis
+- **Twilio Sandbox**: Gratis para pruebas con números aprobados
 
-### Production Costs (Approximate)
+### Costos de Producción (Aproximados)
 
-- Dialogflow CX: $0.007 per request
-- Speech-to-Text: $0.006 per 15 seconds
-- Text-to-Speech: $4 per 1M characters
-- Twilio WhatsApp: ~$0.005 per message
+- Dialogflow CX: $0.007 por petición
+- Speech-to-Text: $0.006 por 15 segundos
+- Text-to-Speech: $4 por 1M caracteres
+- Twilio WhatsApp: ~$0.005 por mensaje
 
-**Estimated cost for 1000 conversations/month**: $10-20
+**Costo estimado para 1000 conversaciones/mes**: $10-20
 
-## 🛠️ Troubleshooting
+## 🛠️ Solución de Problemas
 
-### "Configuration validation failed"
+### "Validación de configuración falló"
 
-Make sure all required environment variables are set in `.env`
+Asegúrate de que todas las variables de entorno requeridas estén configuradas en `.env`
 
-### "Failed to download audio"
+### "Falló la descarga de audio"
 
-Check Twilio credentials and ensure the server can access Twilio's media URLs
+Verifica las credenciales de Twilio y asegúrate de que el servidor pueda acceder a las URLs de medios de Twilio
 
-### "Dialogflow intent detection failed"
+### "Falló la detección de intención de Dialogflow"
 
-Verify your Dialogflow agent ID and ensure the agent is properly trained
+Verifica tu ID de agente de Dialogflow y asegúrate de que el agente esté correctamente entrenado
 
-### Webhook not receiving messages
+### El webhook no recibe mensajes
 
-- Check that your webhook URL is publicly accessible
-- Verify Twilio webhook configuration
-- Check server logs for errors
+- Verifica que tu URL de webhook sea públicamente accesible
+- Verifica la configuración del webhook de Twilio
+- Revisa los registros del servidor para errores
 
-## 📖 API Documentation
+## 📖 Documentación de la API
 
 ### POST /webhook
 
-Receives incoming WhatsApp messages from Twilio.
+Recibe mensajes entrantes de WhatsApp desde Twilio.
 
-**Request Body** (from Twilio):
+**Cuerpo de la Petición** (desde Twilio):
 ```json
 {
   "From": "whatsapp:+1234567890",
-  "Body": "Hello",
+  "Body": "Hola",
   "NumMedia": "0",
   "MessageSid": "SM..."
 }
 ```
 
-**Response**: `200 OK`
+**Respuesta**: `200 OK`
 
 ### GET /webhook
 
-Webhook verification endpoint.
+Endpoint de verificación del webhook.
 
 ### GET /health
 
-Health check endpoint.
+Endpoint de verificación de estado.
 
-**Response**:
+**Respuesta**:
 ```json
 {
   "status": "healthy",
@@ -291,27 +291,27 @@ Health check endpoint.
 }
 ```
 
-## 🤝 Contributing
+## 🤝 Contribuir
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+¡Las contribuciones son bienvenidas! Por favor, siéntete libre de enviar un Pull Request.
 
-## 📄 License
+## 📄 Licencia
 
-MIT License - see LICENSE file for details
+Licencia MIT - consulta el archivo LICENSE para más detalles
 
-## 🙏 Acknowledgments
+## 🙏 Agradecimientos
 
-- [Twilio](https://www.twilio.com/) for WhatsApp API
-- [Google Cloud](https://cloud.google.com/) for AI services
-- [Dialogflow CX](https://cloud.google.com/dialogflow) for conversation AI
+- [Twilio](https://www.twilio.com/) por la API de WhatsApp
+- [Google Cloud](https://cloud.google.com/) por los servicios de IA
+- [Dialogflow CX](https://cloud.google.com/dialogflow) por la IA conversacional
 
-## 📞 Support
+## 📞 Soporte
 
-For issues and questions:
-- Check the [troubleshooting guide](docs/SETUP_GUIDE.md#troubleshooting)
-- Review server logs in `logs/`
-- Open an issue on GitHub
+Para problemas y preguntas:
+- Consulta la [guía de solución de problemas](docs/GUIA_CONFIGURACION.md#solucion-problemas)
+- Revisa los registros del servidor en `logs/`
+- Abre un issue en GitHub
 
 ---
 
-**Built with ❤️ for language learners worldwide**
+**Construido con ❤️ para estudiantes de idiomas en todo el mundo**
